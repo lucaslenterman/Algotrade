@@ -7,14 +7,8 @@ from binance import Client
 
 from strategy_two import strategy_two
 
-TRADE_SYMBOL = 'ETHUSDT'
-default_balance = 100
-default_days = 2
-start = "9 Jun, 2021"
-end = "11 Jun 2021"
 
-
-def retrieve_data(days: int):
+def retrieve_data(days: int, TRADE_SYMBOL: str):
 
     if days <= 0:
         print(f"Days must be positive value")
@@ -39,7 +33,7 @@ def retrieve_data(days: int):
     return closes, highs, lows
 
 
-def retrieve_data_string(time_start, time_end):
+def retrieve_data_string(time_start, time_end, TRADE_SYMBOL: str):
 
     closes = []
     lows = []
@@ -60,7 +54,7 @@ def retrieve_data_string(time_start, time_end):
     return closes, highs, lows
 
 
-def plot_trades(x: list, trades: pd.DataFrame):
+def plot_trades(x: list, trades: pd.DataFrame, days: int, TRADE_SYMBOL: str):
     plt.style.use('Solarize_Light2')
     plt.plot(x, label='closes', color='black')
     for ind, row in trades.iterrows():
@@ -69,8 +63,8 @@ def plot_trades(x: list, trades: pd.DataFrame):
         else:
             plt.axvline(row['Time'], color='red', linewidth='0.5')
 
-    highs = np.array(retrieve_data(default_days)[1])
-    lows = np.array(retrieve_data(default_days)[0])
+    highs = np.array(retrieve_data(days=days, TRADE_SYMBOL=TRADE_SYMBOL)[1])
+    lows = np.array(retrieve_data(days=days, TRADE_SYMBOL=TRADE_SYMBOL)[0])
     sar = talib.SAR(highs, lows)
     plt.plot(sar, label='SAR', color='green', linestyle=(0, (1, 5)))
 
@@ -81,6 +75,12 @@ def plot_trades(x: list, trades: pd.DataFrame):
 def main():
 
     # PREP
+    TRADE_SYMBOL = 'ETHUSDT'
+    default_balance = 100
+    default_days = 2
+    start = "9 Jun, 2021"
+    end = "21 Jun 2021"
+    by_start_and_end = True
 
     # set threshold of lags to calculate indicators
     strategy_two_threshold = 5
@@ -92,8 +92,10 @@ def main():
     sell_round = False
     strategy_two_statuses = [balance_one, in_position_one, waiting, buy_round, sell_round]
 
-    closes, highs, lows = retrieve_data_string(start, end)
-    # closes, highs, lows = retrieve_data(default_days)
+    if by_start_and_end:
+        closes, highs, lows = retrieve_data_string(start, end, TRADE_SYMBOL=TRADE_SYMBOL)
+    else:
+        closes, highs, lows = retrieve_data(days=default_days, TRADE_SYMBOL=TRADE_SYMBOL)
     strategy_two_trades = pd.DataFrame(columns=['Time', 'Price', 'Buy'])
 
     for ind, (close, high, low) in enumerate(zip(closes, highs, lows)):
@@ -125,7 +127,7 @@ def main():
     print(market_return)
     print('------------------')
 
-    plot_trades(x=closes, trades=strategy_two_trades)
+    plot_trades(x=closes, trades=strategy_two_trades, days=default_days, TRADE_SYMBOL=TRADE_SYMBOL)
 
 
 if __name__ == '__main__':
